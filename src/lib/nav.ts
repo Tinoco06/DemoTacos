@@ -6,7 +6,6 @@ import {
   LayoutGrid,
   Package,
   ReceiptText,
-  SquarePen,
   Tag,
   Users,
   Wallet,
@@ -26,7 +25,6 @@ export interface NavItem {
 export const NAV: NavItem[] = [
   { id: 'panel', label: 'Panel principal', icon: LayoutDashboard, roles: ['admin'], group: 'Operación' },
   { id: 'mesas', label: 'Mesas', icon: LayoutGrid, roles: ['admin', 'mesero'], group: 'Operación' },
-  { id: 'pedido', label: 'Tomar pedido', icon: SquarePen, roles: ['admin', 'mesero'], group: 'Operación' },
   { id: 'pedidos', label: 'Pedidos', icon: ClipboardList, roles: ['admin', 'mesero'], group: 'Operación' },
   { id: 'cobro', label: 'Cobro y ventas', icon: HandCoins, roles: ['admin'], group: 'Operación' },
   { id: 'caja', label: 'Caja', icon: Wallet, roles: ['admin'], group: 'Operación' },

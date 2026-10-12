@@ -19,7 +19,9 @@ import { ClientsPage } from './pages/ClientsPage';
 function Shell() {
   const { state } = useApp();
   const route = useRoute();
-  const allowed = navFor(state.role).some((item) => item.id === route.page);
+  // La toma de pedidos no es una sección del menú: solo se abre desde una mesa, un domicilio o una cuenta abierta.
+  const orderEntry = route.page === 'pedido' && Boolean(route.params.mesa || route.params.pedido || route.params.servicio === 'domicilio');
+  const allowed = orderEntry || navFor(state.role).some((item) => item.id === route.page);
   const page = (allowed ? route.page : homeFor(state.role)) as PageId;
 
   useEffect(() => {
@@ -54,7 +56,7 @@ function Shell() {
   })();
 
   const Layout = state.role === 'admin' ? AdminLayout : WaiterLayout;
-  return <Layout page={page}>{content}</Layout>;
+  return <Layout page={page === 'pedido' ? 'mesas' : page}>{content}</Layout>;
 }
 
 export default function App() {

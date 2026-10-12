@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Bike, HandCoins, LayoutGrid, MessageSquarePlus, Search, SearchX, Send, ShoppingBag, Trash2 } from 'lucide-react';
+import { ArrowLeft, HandCoins, LayoutGrid, MessageSquarePlus, Search, SearchX, Send, ShoppingBag, Trash2 } from 'lucide-react';
 import type { OrderItem, Product, ServiceType } from '../types';
 import { useApp, useAttempt } from '../store/AppStore';
 import type { SubmitOrderResult } from '../simulation/orders';
 import { Button } from '../components/ui/Button';
-import { Alert, EmptyState, Segmented, Stepper, SummaryRow } from '../components/ui/Basics';
-import { Field, Input, MoneyInput, Select } from '../components/ui/Field';
+import { Alert, EmptyState, Stepper, SummaryRow } from '../components/ui/Basics';
+import { Field, Input, MoneyInput } from '../components/ui/Field';
 import { Modal } from '../components/ui/Modal';
 import { ProductCard } from '../components/domain/Cards';
 import { KitchenTicket } from '../components/domain/Tickets';
@@ -18,7 +18,7 @@ type Draft = Record<string, { qty: number; note: string }>;
 
 const normalize = (text: string) => text.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 
-function PrintResult({ result, onTables, onNew }: { result: SubmitOrderResult; onTables: () => void; onNew: () => void }) {
+function PrintResult({ result, onTables }: { result: SubmitOrderResult; onTables: () => void }) {
   const [printing, setPrinting] = useState(true);
   useEffect(() => {
     const timer = window.setTimeout(() => setPrinting(false), 1100);
@@ -31,14 +31,9 @@ function PrintResult({ result, onTables, onNew }: { result: SubmitOrderResult; o
       description={`Pedido ${fmtOrderNumber(result.order.number)} · ${serviceLabel(result.order)}`}
       onClose={onTables}
       footer={
-        <>
-          <Button size="lg" onClick={onNew}>
-            Nuevo pedido
-          </Button>
-          <Button size="lg" variant="primary" icon={LayoutGrid} onClick={onTables}>
-            Volver a mesas
-          </Button>
-        </>
+        <Button size="lg" variant="primary" icon={LayoutGrid} onClick={onTables}>
+          Volver a mesas
+        </Button>
       }
     >
       <div className="mb-4" aria-live="polite">
@@ -57,6 +52,10 @@ function PrintResult({ result, onTables, onNew }: { result: SubmitOrderResult; o
   );
 }
 
+/**
+ * Interfaz de toma de pedidos. No es una sección propia: se abre desde una mesa
+ * (?mesa=), desde «Pedido a domicilio» (?servicio=domicilio) o desde una cuenta abierta (?pedido=).
+ */
 export function TakeOrderPage({ params }: { params: Record<string, string> }) {
   const { state, actions } = useApp();
   const attempt = useAttempt();
@@ -65,10 +64,10 @@ export function TakeOrderPage({ params }: { params: Record<string, string> }) {
   const paramOrder = params.pedido ? state.orders.find((o) => o.id === params.pedido && o.status === 'abierta') : undefined;
   const paramTable = state.tables.find((t) => t.id === params.mesa && t.active);
   const [lockedOrderId] = useState(paramOrder && paramOrder.service !== 'mesa' ? paramOrder.id : null);
-  const [service, setService] = useState<ServiceType>(
+  const [service] = useState<ServiceType>(
     paramOrder?.service ?? (params.servicio === 'domicilio' ? 'domicilio' : 'mesa'),
   );
-  const [tableId, setTableId] = useState(paramOrder?.tableId ?? paramTable?.id ?? '');
+  const [tableId] = useState(paramOrder?.tableId ?? paramTable?.id ?? '');
   const [customer, setCustomer] = useState('');
   const [shippingText, setShippingText] = useState('');
   const [draft, setDraft] = useState<Draft>({});
@@ -102,10 +101,14 @@ export function TakeOrderPage({ params }: { params: Record<string, string> }) {
   const total = existing ? round2(orderTotal(existing) + draftSubtotal) : round2(draftSubtotal + shipping);
   const count = itemsCount(items);
 
-  const missingTable = service === 'mesa' && !tableId;
+  // Sin mesa válida ni pedido a domicilio no hay nada que tomar: se vuelve a Mesas.
+  const invalidEntry = service === 'mesa' && !table;
+  useEffect(() => {
+    if (invalidEntry) navigate('mesas');
+  }, [invalidEntry]);
   const missingAddress = service === 'domicilio' && !existing && customer.trim().length < 3;
-  const canReview = count > 0 && !missingTable && !missingAddress && !shippingError;
-  const destination = existing ? serviceLabel(existing) : service === 'mesa' ? table?.name ?? 'Sin mesa' : 'Domicilio';
+  const canReview = count > 0 && !missingAddress && !shippingError;
+  const destination = existing ? serviceLabel(existing) : service === 'mesa' ? table?.name ?? 'Mesa' : 'Domicilio';
 
   const setQty = (product: Product, qty: number) => {
     const capped = product.trackStock ? Math.min(qty, product.stock) : qty;
@@ -128,15 +131,6 @@ export function TakeOrderPage({ params }: { params: Record<string, string> }) {
       setDraft({});
       setSent(result.value);
     }
-  };
-
-  const startNew = () => {
-    setSent(null);
-    setCustomer('');
-    setShippingText('');
-    setOpenNotes({});
-    setTableId('');
-    if (lockedOrderId) navigate('pedido');
   };
 
   const totals = (
@@ -205,7 +199,6 @@ export function TakeOrderPage({ params }: { params: Record<string, string> }) {
       </div>
       <div className="flex shrink-0 flex-col gap-4 border-t border-line px-5 py-4">
         {totals}
-        {missingTable && count > 0 && <p className="text-sm text-warn">Seleccione una mesa para continuar.</p>}
         {missingAddress && count > 0 && <p className="text-sm text-warn">Ingrese la dirección de entrega para continuar.</p>}
         <Button variant="primary" size="lg" full icon={Send} disabled={!canReview} onClick={() => setReviewing(true)}>
           Revisar pedido
@@ -219,6 +212,8 @@ export function TakeOrderPage({ params }: { params: Record<string, string> }) {
     </div>
   );
 
+  if (invalidEntry) return null;
+
   return (
     <div className="pb-24 lg:pb-0">
       <div className="mb-6 flex flex-wrap items-center gap-x-4 gap-y-3">
@@ -226,49 +221,23 @@ export function TakeOrderPage({ params }: { params: Record<string, string> }) {
           Mesas
         </Button>
         <div className="min-w-0">
-          <h1 className="text-2xl font-semibold tracking-tight text-ink">{existing ? `Agregar a ${serviceLabel(existing)}` : 'Tomar pedido'}</h1>
-          {existing && <p className="text-sm text-muted">Pedido {fmtOrderNumber(existing.number)} · cuenta abierta de {fmtMoney(orderTotal(existing))}</p>}
+          <h1 className="text-2xl font-semibold tracking-tight text-ink">{existing ? serviceLabel(existing) : service === 'mesa' ? table?.name : 'Pedido a domicilio'}</h1>
+          <p className="text-sm text-muted">{existing ? `Pedido ${fmtOrderNumber(existing.number)} · cuenta abierta de ${fmtMoney(orderTotal(existing))}` : 'Nuevo pedido'}</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_340px] xl:grid-cols-[minmax(0,1fr)_380px]">
         <div className="flex min-w-0 flex-col gap-5">
-          {!lockedOrderId && (
-            <section className="flex flex-col gap-4 rounded-xl border border-line bg-white p-4">
-              <Segmented
-                label="Tipo de servicio"
-                full
-                size="lg"
-                value={service}
-                onChange={setService}
-                options={[
-                  { value: 'mesa', label: 'Mesa', icon: LayoutGrid },
-                  { value: 'domicilio', label: 'Domicilio', icon: Bike },
-                ]}
-              />
-              {service === 'mesa' && (
-                <Field label="Mesa">
-                  <Select value={tableId} onChange={(e) => setTableId(e.target.value)} className="h-12 text-base">
-                    <option value="">Seleccione una mesa</option>
-                    {state.tables.filter((t) => t.active).map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.name}
-                        {openOrderForTable(state, t.id) ? ' — cuenta abierta' : ''}
-                      </option>
-                    ))}
-                  </Select>
-                </Field>
-              )}
-              {service === 'domicilio' && (
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,1fr)_180px]">
-                  <Field label="Cliente y dirección de entrega">
-                    <Input value={customer} onChange={(e) => setCustomer(e.target.value)} placeholder="Nombre, colonia y referencia" className="h-12" maxLength={100} />
-                  </Field>
-                  <Field label="Costo de envío" error={shippingError}>
-                    <MoneyInput value={shippingText} onChange={(e) => setShippingText(e.target.value)} invalid={Boolean(shippingError)} className="h-12" />
-                  </Field>
-                </div>
-              )}
+          {service === 'domicilio' && !existing && (
+            <section className="rounded-xl border border-line bg-white p-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,1fr)_180px]">
+              <Field label="Cliente y dirección de entrega">
+                <Input value={customer} onChange={(e) => setCustomer(e.target.value)} placeholder="Nombre, colonia y referencia" className="h-12" maxLength={100} />
+              </Field>
+              <Field label="Costo de envío" error={shippingError}>
+                <MoneyInput value={shippingText} onChange={(e) => setShippingText(e.target.value)} invalid={Boolean(shippingError)} className="h-12" />
+              </Field>
+            </div>
             </section>
           )}
 
@@ -369,7 +338,7 @@ export function TakeOrderPage({ params }: { params: Record<string, string> }) {
         </Modal>
       )}
 
-      {sent && <PrintResult result={sent} onTables={() => navigate('mesas')} onNew={startNew} />}
+      {sent && <PrintResult result={sent} onTables={() => navigate('mesas')} />}
     </div>
   );
 }

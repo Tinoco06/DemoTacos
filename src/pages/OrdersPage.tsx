@@ -130,11 +130,6 @@ export function OrdersPage() {
       <PageHeader
         title="Pedidos y comprobantes"
         description="Cuentas abiertas, ventas recientes y vista previa de tickets."
-        actions={
-          <Button variant="primary" icon={Plus} onClick={() => navigate('pedido')}>
-            Nuevo pedido
-          </Button>
-        }
       />
       <Segmented
         label="Tipo de pedido"

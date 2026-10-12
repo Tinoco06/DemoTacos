@@ -8,7 +8,7 @@ import { addDays, endOfDay, fmtDate, fmtLongDate, fmtMoney, fmtOrderNumber, fmtT
 import { navigate, type PageId } from '../lib/router';
 
 const QUICK: Array<{ page: PageId; label: string; hint: string; icon: LucideIcon }> = [
-  { page: 'pedido', label: 'Nuevo pedido', hint: 'En mesa o a domicilio', icon: SquarePen },
+  { page: 'mesas', label: 'Tomar pedido', hint: 'Desde las mesas o a domicilio', icon: SquarePen },
   { page: 'cobro', label: 'Cobrar cuenta', hint: 'Efectivo, transferencia o crédito', icon: HandCoins },
   { page: 'gastos', label: 'Registrar gasto', hint: 'Insumos, bebidas y servicios', icon: ReceiptText },
   { page: 'reportes', label: 'Ver reportes', hint: 'Resumen semanal', icon: ChartColumn },

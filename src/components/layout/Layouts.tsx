@@ -178,7 +178,7 @@ export function AdminLayout({ page, children }: { page: string; children: ReactN
   );
 }
 
-const WAITER_LABELS: Partial<Record<PageId, string>> = { pedido: 'Nuevo pedido', pedidos: 'Cuentas abiertas' };
+const WAITER_LABELS: Partial<Record<PageId, string>> = { pedidos: 'Cuentas abiertas' };
 
 export function WaiterLayout({ page, children }: { page: string; children: ReactNode }) {
   const reset = useResetDemo();
