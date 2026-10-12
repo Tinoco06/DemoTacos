@@ -1,0 +1,73 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Inter Variable', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, 'Cascadia Mono', 'Consolas', 'Menlo', monospace;
+
+  /* Marca */
+  --color-carbon: #252323;
+  --color-carbon-soft: #363333;
+  --color-marfil: #f7f5f0;
+  --color-frambuesa: #b83d5a;
+  --color-frambuesa-dark: #9c3049;
+  --color-frambuesa-soft: #f8e9ed;
+  --color-crema: #e8d6a5;
+  --color-crema-soft: #f8f1dc;
+  --color-azul: #2678b9;
+  --color-azul-soft: #e6f0f8;
+
+  /* Neutros */
+  --color-ink: #252323;
+  --color-muted: #66615e;
+  --color-line: #e5e1d8;
+
+  /* Estados */
+  --color-ok: #1e7a4c;
+  --color-ok-soft: #e4f2ea;
+  --color-warn: #8a5a00;
+  --color-warn-soft: #fbf0d4;
+  --color-bad: #b42318;
+  --color-bad-soft: #fce9e6;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-marfil);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-feature-settings: 'cv11', 'ss01';
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+[role='button'],
+select,
+summary {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-azul);
+  outline-offset: 2px;
+}
+
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
