@@ -1,5 +1,6 @@
 import type {
   AppState,
+  OrderOperation,
   CashMovement,
   CashSession,
   Expense,
@@ -17,7 +18,7 @@ import { addDays, round2, startOfDay } from '../lib/format';
 import { INITIAL_CLIENTS, INITIAL_PRODUCTS, INITIAL_TABLES, USERS } from './catalog';
 
 // Se incrementa cuando cambia la forma de los datos, para descartar lo guardado en el navegador.
-export const STATE_VERSION = 2;
+export const STATE_VERSION = 3;
 
 const DEMO_ADDRESSES = ['Col. Las Palmas, casa 12', 'Barrio El Centro, frente al parque', 'Res. Los Pinos, bloque C', 'Col. San José, calle principal'];
 
@@ -43,8 +44,17 @@ const WEIGHT_TOTAL = WEIGHTED.reduce((n, [, w]) => n + w, 0);
 
 const item = (productId: string, qty: number, note = ''): OrderItem => {
   const p = INITIAL_PRODUCTS.find((x) => x.id === productId)!;
-  return { productId, name: p.name, price: p.price, qty, note };
+  return { productId, name: p.name, price: p.price, qty, note, fulfillment: p.fulfillment };
 };
+
+/** Historial inicial de una cuenta: un envío a cocina con las comidas y una entrega directa con las bebidas. */
+function seedOperations(order: Order): OrderOperation[] {
+  const group = (kind: OrderOperation['kind'], fulfillment: OrderItem['fulfillment']): OrderOperation[] => {
+    const items = order.items.filter((i) => i.fulfillment === fulfillment);
+    return items.length ? [{ id: `${order.id}-${kind}`, kind, number: 1, date: order.createdAt, user: order.waiter, items: items.map((i) => ({ ...i })) }] : [];
+  };
+  return [...group('cocina', 'PREPARADO'), ...group('directo', 'DIRECTO')];
+}
 
 /**
  * Construye los datos de demostración a partir de la fecha actual: dos semanas
@@ -110,6 +120,7 @@ export function buildSeed(now: Date): AppState {
         tableName: service === 'mesa' ? table.name : null,
         customer: service === 'domicilio' ? DEMO_ADDRESSES[Math.floor(hour * 10) % DEMO_ADDRESSES.length] : '',
         items: [...lines].map(([productId, qty]) => item(productId, qty)),
+        operations: [],
         shipping: service === 'domicilio' ? 30 + Math.floor(rand() * 3) * 10 : 0,
         discount: 0,
         status: 'cobrada',
@@ -179,6 +190,7 @@ export function buildSeed(now: Date): AppState {
       tableName: table?.name ?? null,
       customer: '',
       items,
+      operations: [],
       shipping: 0,
       discount: 0,
       status: 'abierta',
@@ -240,6 +252,8 @@ export function buildSeed(now: Date): AppState {
     move(6, 14.5, 'barena', 'entrada', 24, 61, 'Pedido a distribuidora'),
     move(6, 14.5, 'coca-desechable', 'entrada', 24, 58, 'Pedido a distribuidora'),
   ];
+
+  for (const order of orders) order.operations = seedOperations(order);
 
   const state: AppState = {
     version: STATE_VERSION,

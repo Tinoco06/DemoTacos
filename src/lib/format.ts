@@ -15,6 +15,8 @@ const dateFmt = new Intl.DateTimeFormat('es-HN', { day: '2-digit', month: '2-dig
 const timeFmt = new Intl.DateTimeFormat('es-HN', { hour: '2-digit', minute: '2-digit', hour12: true });
 const longFmt = new Intl.DateTimeFormat('es-HN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 const dayFmt = new Intl.DateTimeFormat('es-HN', { weekday: 'short' });
+const fullFmt = new Intl.DateTimeFormat('es-HN', { day: 'numeric', month: 'long', year: 'numeric' });
+const monthFmt = new Intl.DateTimeFormat('es-HN', { month: 'short' });
 
 export const fmtDate = (iso: string | Date) => dateFmt.format(new Date(iso));
 export const fmtTime = (iso: string | Date) => timeFmt.format(new Date(iso));
@@ -22,6 +24,13 @@ export const fmtDateTime = (iso: string | Date) => `${fmtDate(iso)} ${fmtTime(is
 export const fmtLongDate = (d: Date) => {
   const text = longFmt.format(d);
   return text.charAt(0).toUpperCase() + text.slice(1);
+};
+/** «18 de octubre de 2026» */
+export const fmtFullDate = (iso: string | Date) => fullFmt.format(new Date(iso));
+/** «18 oct 2026» */
+export const fmtShortDate = (iso: string | Date) => {
+  const d = new Date(iso);
+  return `${String(d.getDate()).padStart(2, '0')} ${monthFmt.format(d).replace('.', '')} ${d.getFullYear()}`;
 };
 export const fmtDayLabel = (d: Date) =>
   `${dayFmt.format(d).replace('.', '')} ${String(d.getDate()).padStart(2, '0')}`;

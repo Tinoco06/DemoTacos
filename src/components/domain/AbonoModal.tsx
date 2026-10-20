@@ -18,7 +18,7 @@ export function AbonoModal({ clientId, onClose }: { clientId: string; onClose: (
 
   const balance = clientBalance(state, client.id);
   const amount = parseAmount(amountText);
-  const noCash = method === 'efectivo' && !currentSession(state);
+  const noCash = !currentSession(state);
   const error =
     amountText.trim() === ''
       ? null
@@ -76,7 +76,7 @@ export function AbonoModal({ clientId, onClose }: { clientId: string; onClose: (
             ]}
           />
         </div>
-        {noCash && <Alert tone="warning">La caja está cerrada. Ábrala para recibir efectivo o registre el abono como transferencia.</Alert>}
+        {noCash && <Alert tone="warning">La caja está cerrada. Ábrala para registrar abonos.</Alert>}
       </div>
     </Modal>
   );

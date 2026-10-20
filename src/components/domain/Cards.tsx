@@ -32,23 +32,42 @@ export function TableCard({ table, order, onSelect }: { table: DiningTable; orde
 
 interface ProductCardProps {
   product: Product;
-  qty: number;
-  onChange: (qty: number) => void;
+  /** Unidades seleccionadas que aún no se envían a cocina (solo productos preparados). */
+  pendingQty: number;
+  /** Unidades ya confirmadas en la cuenta. */
+  accountQty: number;
+  onPendingChange: (qty: number) => void;
+  onAddDirect: () => void;
+  /** Sin caja abierta no se pueden agregar productos. */
+  disabled?: boolean;
 }
 
-/** Tarjeta táctil del catálogo. El stock disponible ya descuenta lo que está en el pedido en curso. */
-export function ProductCard({ product, qty, onChange }: ProductCardProps) {
+/**
+ * Tarjeta táctil del catálogo. Un producto DIRECTO se suma a la cuenta con cada toque;
+ * uno PREPARADO se acumula como pendiente y muestra su cantidad para ajustarla.
+ */
+export function ProductCard({ product, pendingQty, accountQty, onPendingChange, onAddDirect, disabled }: ProductCardProps) {
   const status = stockStatus(product);
   const soldOut = status === 'agotado';
+  const direct = product.fulfillment === 'DIRECTO';
+  const qty = direct ? 0 : pendingQty;
   const remaining = product.stock - qty;
+  const onChange = onPendingChange;
   return (
-    <div className={cn('flex min-h-40 flex-col gap-3 rounded-xl border bg-white p-4', qty > 0 ? 'border-frambuesa' : 'border-line', soldOut && 'bg-marfil')}>
+    <div
+      className={cn(
+        'flex min-h-40 flex-col gap-3 rounded-xl border bg-white p-4 shadow-xs transition-colors',
+        qty > 0 ? 'border-frambuesa' : 'border-line hover:border-carbon/25',
+        soldOut && 'bg-marfil shadow-none hover:border-line',
+      )}
+    >
       <div className="flex-1">
-        <p className={cn('font-medium leading-snug', soldOut ? 'text-muted' : 'text-ink')}>{product.name}</p>
+        <p className={cn('text-[15px] font-semibold leading-snug', soldOut ? 'text-muted' : 'text-ink')}>{product.name}</p>
         {product.detail && <p className="mt-0.5 text-sm text-muted">{product.detail}</p>}
+        {accountQty > 0 && <p className="mt-0.5 text-sm text-muted">{accountQty} en la cuenta</p>}
       </div>
       <div className="flex min-h-6 items-center justify-between gap-2">
-        <span className={cn('text-base font-semibold tabular-nums', soldOut ? 'text-muted' : 'text-ink')}>{fmtMoney(product.price)}</span>
+        <span className={cn('text-lg font-semibold tabular-nums', soldOut ? 'text-muted' : 'text-ink')}>{fmtMoney(product.price)}</span>
         {soldOut ? <Badge tone="danger">Agotado</Badge> : status === 'bajo' ? <Badge tone="warning">Quedan {Math.max(0, remaining)}</Badge> : null}
       </div>
       {qty > 0 ? (
@@ -56,9 +75,9 @@ export function ProductCard({ product, qty, onChange }: ProductCardProps) {
       ) : (
         <button
           type="button"
-          disabled={soldOut}
-          onClick={() => onChange(1)}
-          className="flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-line bg-white text-sm font-medium text-ink hover:bg-marfil disabled:bg-transparent disabled:text-muted"
+          disabled={soldOut || disabled}
+          onClick={() => (direct ? onAddDirect() : onChange(1))}
+          className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-frambuesa-soft text-sm font-semibold text-frambuesa transition-colors hover:bg-frambuesa hover:text-white disabled:border disabled:border-line disabled:bg-transparent disabled:font-medium disabled:text-muted"
         >
           {!soldOut && <Plus className="size-5" aria-hidden />}
           {soldOut ? 'Sin existencias' : 'Agregar'}

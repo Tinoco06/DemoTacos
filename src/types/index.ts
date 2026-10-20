@@ -13,6 +13,9 @@ export interface Category {
   name: string;
 }
 
+/** PREPARADO: requiere preparación y se envía a cocina. DIRECTO: se entrega al cliente sin pasar por cocina. */
+export type Fulfillment = 'PREPARADO' | 'DIRECTO';
+
 export interface Product {
   id: string;
   name: string;
@@ -20,6 +23,7 @@ export interface Product {
   categoryId: CategoryId;
   price: number;
   active: boolean;
+  fulfillment: Fulfillment;
   /** Solo las bebidas controlan existencias; los platos no descuentan stock. */
   trackStock: boolean;
   stock: number;
@@ -54,6 +58,21 @@ export interface OrderItem {
   price: number;
   qty: number;
   note: string;
+  fulfillment: Fulfillment;
+}
+
+/**
+ * Cada incorporación a una cuenta: un envío a cocina (comidas) o una entrega
+ * directa (bebidas). Es el historial; consultarlo o reimprimirlo no modifica la cuenta.
+ */
+export interface OrderOperation {
+  id: string;
+  kind: 'cocina' | 'directo';
+  /** Consecutivo dentro de la cuenta, por tipo: envío a cocina 1, 2, 3… */
+  number: number;
+  date: string;
+  user: string;
+  items: OrderItem[];
 }
 
 export type OrderStatus = 'abierta' | 'cobrada' | 'cancelada';
@@ -65,7 +84,9 @@ export interface Order {
   tableId: string | null;
   tableName: string | null;
   customer: string;
+  /** Productos confirmados en la cuenta. Las comidas pendientes de envío no se guardan aquí. */
   items: OrderItem[];
+  operations: OrderOperation[];
   shipping: number;
   discount: number;
   status: OrderStatus;

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import type { Client, Order, OrderItem, Payment } from '../../types';
+import type { Client, Order, OrderOperation, Payment } from '../../types';
 import { METHOD_LABEL, itemsCount, orderSubtotal, orderTotal, serviceLabel } from '../../lib/calc';
 import { fmtDateTime, fmtMoney, fmtOrderNumber } from '../../lib/format';
 
@@ -33,23 +33,18 @@ function Heading({ subtitle }: { subtitle: string }) {
   );
 }
 
-interface KitchenTicketProps {
-  order: Order;
-  items: OrderItem[];
-  date: string;
-  isAddition?: boolean;
-}
-
-export function KitchenTicket({ order, items, date, isAddition }: KitchenTicketProps) {
+/** Ticket de un envío a cocina: contiene únicamente las comidas de esa operación. */
+export function KitchenTicket({ order, operation }: { order: Order; operation: OrderOperation }) {
+  const { items, date } = operation;
   return (
     <Paper>
-      <Heading subtitle={isAddition ? 'Cocina · Adición' : 'Ticket de cocina'} />
+      <Heading subtitle={`Cocina · Envío ${operation.number}`} />
       <Rule />
       <Line left="Pedido" right={fmtOrderNumber(order.number)} bold />
       <Line left="Servicio" right={serviceLabel(order)} bold />
       {order.customer && <p className="break-words">Entrega: {order.customer}</p>}
       <Line left="Fecha" right={fmtDateTime(date)} />
-      <Line left="Atendió" right={order.waiter} />
+      <Line left="Atendió" right={operation.user} />
       <Rule />
       <ul className="flex flex-col gap-2">
         {items.map((item, index) => (

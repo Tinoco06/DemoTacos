@@ -1,5 +1,5 @@
 import type { AppState, Client, DiningTable, Expense, ExpenseCategory, Product } from '../types';
-import { currentSession, openOrderForTable, sessionSummary } from '../lib/calc';
+import { currentSession, openOrderForTable, openOrders, sessionSummary } from '../lib/calc';
 import { endOfDay, round2, startOfDay, uid } from '../lib/format';
 import { SimError } from './errors';
 
@@ -72,7 +72,12 @@ export function openCash(state: AppState, input: { amount: number; user: string 
 export function closeCash(state: AppState, input: { counted: number; note: string }): AppState {
   const session = currentSession(state);
   if (!session) throw new SimError('No hay una caja abierta.');
-  if (!(input.counted >= 0)) throw new SimError('Ingrese el efectivo contado.');
+  // Una cuenta abierta todavía tiene consumo por cobrar. Las ventas al crédito ya finalizadas no bloquean.
+  const pending = openOrders(state).length;
+  if (pending > 0) {
+    throw new SimError(`Hay ${pending === 1 ? '1 cuenta abierta pendiente' : `${pending} cuentas abiertas pendientes`} de cobro. Finalícelas antes de cerrar la caja.`);
+  }
+  if (!(input.counted >= 0)) throw new SimError('Ingrese el efectivo declarado.');
   const expected = sessionSummary(state, session).expected;
   return {
     ...state,
@@ -150,6 +155,7 @@ export interface ProductInput {
   categoryId: Product['categoryId'];
   price: number;
   active: boolean;
+  fulfillment: Product['fulfillment'];
   trackStock: boolean;
   stock: number;
   minStock: number;
@@ -173,6 +179,7 @@ export function saveProduct(state: AppState, input: ProductInput): AppState {
       categoryId: input.categoryId,
       price,
       active: input.active,
+      fulfillment: input.fulfillment,
       trackStock: input.trackStock,
       stock: input.trackStock ? Math.max(0, Math.trunc(input.stock)) : 0,
       minStock: input.trackStock ? Math.max(0, Math.trunc(input.minStock)) : 0,
@@ -189,6 +196,7 @@ export function saveProduct(state: AppState, input: ProductInput): AppState {
     categoryId: input.categoryId,
     price,
     active: input.active,
+    fulfillment: input.fulfillment,
     trackStock: input.trackStock,
     minStock: input.trackStock ? Math.max(0, Math.trunc(input.minStock)) : 0,
     // Un precio confirmado por el administrador deja de ser provisional.

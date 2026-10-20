@@ -17,6 +17,7 @@ const dish = (id: string, name: string, categoryId: Product['categoryId'], price
   categoryId,
   price,
   active: true,
+  fulfillment: 'PREPARADO',
   trackStock: false,
   stock: 0,
   minStock: 0,
@@ -29,6 +30,7 @@ const drink = (id: string, name: string, categoryId: Product['categoryId'], pric
   categoryId,
   price,
   active: true,
+  fulfillment: 'DIRECTO',
   trackStock: true,
   stock,
   minStock,
@@ -66,8 +68,8 @@ export const INITIAL_PRODUCTS: Product[] = [
   drink('heineken', 'Heineken', 'cervezas-internacionales', 40, 18, 12),
 
   // Los cubetazos se venden con precio propio y no descuentan inventario en el prototipo.
-  dish('cubetazo-int', 'Cubetazo internacional', 'cubetazos', 300, { detail: 'Seis cervezas' }),
-  dish('cubetazo-nac', 'Cubetazo nacional', 'cubetazos', 210, { detail: 'Seis cervezas' }),
+  dish('cubetazo-int', 'Cubetazo internacional', 'cubetazos', 300, { detail: 'Seis cervezas', fulfillment: 'DIRECTO' }),
+  dish('cubetazo-nac', 'Cubetazo nacional', 'cubetazos', 210, { detail: 'Seis cervezas', fulfillment: 'DIRECTO' }),
 ];
 
 export const INITIAL_TABLES: DiningTable[] = Array.from({ length: 8 }, (_, i) => ({

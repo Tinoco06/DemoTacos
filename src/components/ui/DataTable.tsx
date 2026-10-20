@@ -15,10 +15,12 @@ interface DataTableProps<T> {
   rowKey: (row: T) => string;
   empty?: ReactNode;
   minWidth?: number;
+  /** Clases adicionales para resaltar filas concretas. */
+  rowClassName?: (row: T) => string | undefined;
 }
 
 /** Tabla legible con desplazamiento horizontal propio en pantallas angostas. */
-export function DataTable<T>({ columns, rows, rowKey, empty, minWidth = 640 }: DataTableProps<T>) {
+export function DataTable<T>({ columns, rows, rowKey, empty, minWidth = 640, rowClassName }: DataTableProps<T>) {
   if (rows.length === 0 && empty) return <>{empty}</>;
   return (
     <div className="overflow-x-auto">
@@ -34,9 +36,9 @@ export function DataTable<T>({ columns, rows, rowKey, empty, minWidth = 640 }: D
         </thead>
         <tbody>
           {rows.map((row) => (
-            <tr key={rowKey(row)} className="border-b border-line last:border-b-0">
+            <tr key={rowKey(row)} className={cn('border-b border-line last:border-b-0', rowClassName?.(row))}>
               {columns.map((column) => (
-                <td key={column.key} className={cn('px-5 py-3.5 align-middle text-ink', column.align === 'right' && 'text-right tabular-nums', column.className)}>
+                <td key={column.key} className={cn('px-5 py-3.5 align-middle text-ink', column.align === 'right' && 'whitespace-nowrap text-right tabular-nums', column.className)}>
                   {column.render(row)}
                 </td>
               ))}

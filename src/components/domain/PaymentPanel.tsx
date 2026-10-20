@@ -66,8 +66,7 @@ export function PaymentPanel({ order, onCharged }: { order: Order; onCharged: (o
       ];
     }
   }
-  const usesCash = total > 0 && parts.some((p) => p.method === 'efectivo' && p.amount > 0);
-  if (!problem && usesCash && !cashOpen) problem = 'Abra la caja para recibir efectivo.';
+  if (!problem && !cashOpen) problem = 'La caja está cerrada. Ábrala para registrar cobros.';
 
   const quick = [...new Set([total, ...[50, 100, 200, 500].map((step) => Math.ceil(total / step) * step)])].filter((v) => v >= total).slice(0, 4);
 
@@ -202,7 +201,7 @@ export function PaymentPanel({ order, onCharged }: { order: Order; onCharged: (o
         </div>
       )}
 
-      {problem && <Alert tone="warning">{problem}{!cashOpen && usesCash && <> <a href="#/caja" className="font-medium underline">Ir a caja</a></>}</Alert>}
+      {problem && <Alert tone="warning">{problem}{!cashOpen && <> <a href="#/caja" className="font-medium underline">Ir a caja</a></>}</Alert>}
 
       <Button variant="primary" size="lg" full icon={Check} disabled={Boolean(problem)} onClick={confirm}>
         Confirmar cobro de {fmtMoney(total)}

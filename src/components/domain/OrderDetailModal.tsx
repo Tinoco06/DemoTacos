@@ -28,6 +28,7 @@ export function OrderDetailModal({ orderId, initialView = 'cuenta', onClose }: {
 
   const isAdmin = state.role === 'admin';
   const open = order.status === 'abierta';
+  const kitchen = order.operations.filter((o) => o.kind === 'cocina');
   const title = `Pedido ${fmtOrderNumber(order.number)} · ${serviceLabel(order)}`;
 
   if (cancelling) {
@@ -98,12 +99,23 @@ export function OrderDetailModal({ orderId, initialView = 'cuenta', onClose }: {
           onChange={setView}
           options={[
             { value: 'cuenta', label: order.status === 'cobrada' ? 'Comprobante de venta' : 'Estado de cuenta' },
-            { value: 'cocina', label: 'Ticket de cocina' },
+            { value: 'cocina', label: 'Tickets de cocina', count: kitchen.length },
           ]}
         />
       </div>
       {view === 'cocina' ? (
-        <KitchenTicket order={order} items={order.items} date={order.createdAt} />
+        kitchen.length === 0 ? (
+          <p className="rounded-lg border border-line px-4 py-8 text-center text-sm text-muted">Esta cuenta no tiene envíos a cocina: solo incluye productos de entrega directa.</p>
+        ) : (
+          <div className="flex flex-col gap-4">
+            <p className="text-sm text-muted">
+              {kitchen.length === 1 ? '1 envío a cocina.' : `${kitchen.length} envíos a cocina independientes.`} Consultarlos o reimprimirlos no modifica la cuenta ni el inventario.
+            </p>
+            {kitchen.map((operation) => (
+              <KitchenTicket key={operation.id} order={order} operation={operation} />
+            ))}
+          </div>
+        )
       ) : (
         <SaleReceipt order={order} payments={state.payments} clients={state.clients} />
       )}

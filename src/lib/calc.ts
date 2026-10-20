@@ -113,6 +113,8 @@ export interface SessionSummary {
   /** Referencia informativa: no forman parte del efectivo físico. */
   transfers: number;
   creditSales: number;
+  /** Ventas cobradas durante la sesión, por método. Cada venta se cuenta una sola vez. */
+  sales: Record<PayMethod, number> & { total: number };
 }
 
 export function sessionSummary(state: AppState, session: CashSession): SessionSummary {
@@ -121,6 +123,7 @@ export function sessionSummary(state: AppState, session: CashSession): SessionSu
   const from = new Date(session.openedAt);
   const to = session.closedAt ? new Date(session.closedAt) : new Date(8640000000000000);
   const during = state.payments.filter((p) => inRange(p.date, from, to));
+  const salesDuring = during.filter((p) => p.kind === 'venta');
   const opening = session.openingAmount;
   const cashSales = sumBy(pays.filter((p) => p.kind === 'venta'), (p) => p.amount);
   const cashAbonos = sumBy(pays.filter((p) => p.kind === 'abono'), (p) => p.amount);
@@ -137,5 +140,11 @@ export function sessionSummary(state: AppState, session: CashSession): SessionSu
     expected: round2(opening + cashSales + cashAbonos + entries - exits - cashExpenses),
     transfers: sumBy(during.filter((p) => p.method === 'transferencia'), (p) => p.amount),
     creditSales: sumBy(during.filter((p) => p.method === 'credito' && p.kind === 'venta'), (p) => p.amount),
+    sales: {
+      efectivo: sumBy(salesDuring.filter((p) => p.method === 'efectivo'), (p) => p.amount),
+      transferencia: sumBy(salesDuring.filter((p) => p.method === 'transferencia'), (p) => p.amount),
+      credito: sumBy(salesDuring.filter((p) => p.method === 'credito'), (p) => p.amount),
+      total: sumBy(salesDuring, (p) => p.amount),
+    },
   };
 }

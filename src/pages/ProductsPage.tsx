@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { History, Pencil, Plus, Search, Tag } from 'lucide-react';
-import type { CategoryId, PriceChange, Product } from '../types';
+import type { CategoryId, Fulfillment, PriceChange, Product } from '../types';
 import { useApp, useAttempt } from '../store/AppStore';
 import { Button } from '../components/ui/Button';
 import { Alert, Badge, Card, EmptyState, PageHeader } from '../components/ui/Basics';
@@ -17,6 +17,7 @@ function ProductModal({ product, onClose }: { product: Product | null; onClose: 
   const [categoryId, setCategoryId] = useState<CategoryId>(product?.categoryId ?? 'mexicano');
   const [priceText, setPriceText] = useState(product ? product.price.toFixed(2) : '');
   const [active, setActive] = useState(product?.active ?? true);
+  const [fulfillment, setFulfillment] = useState<Fulfillment>(product?.fulfillment ?? 'PREPARADO');
   const [trackStock, setTrackStock] = useState(product?.trackStock ?? false);
   const [stockText, setStockText] = useState('0');
   const [minText, setMinText] = useState(String(product?.minStock ?? 0));
@@ -36,7 +37,7 @@ function ProductModal({ product, onClose }: { product: Product | null; onClose: 
   const save = () => {
     setSubmitted(true);
     if (!valid) return;
-    const input = { id: product?.id ?? null, name, categoryId, price, active, trackStock, stock: Number(stockText) || 0, minStock: Number(minText) || 0, user: USERS[state.role] };
+    const input = { id: product?.id ?? null, name, categoryId, price, active, fulfillment, trackStock, stock: Number(stockText) || 0, minStock: Number(minText) || 0, user: USERS[state.role] };
     if (attempt(() => actions.saveProduct(input), product ? 'Producto actualizado.' : 'Producto creado.').ok) onClose();
   };
 
@@ -83,6 +84,12 @@ function ProductModal({ product, onClose }: { product: Product | null; onClose: 
             </Alert>
           </div>
         )}
+        <Field label="Tipo de entrega" hint={fulfillment === 'PREPARADO' ? 'Queda pendiente hasta que el mesero lo envía a cocina.' : 'Se suma a la cuenta al instante, sin ticket de cocina.'} className="sm:col-span-2">
+          <Select value={fulfillment} onChange={(e) => setFulfillment(e.target.value as Fulfillment)}>
+            <option value="PREPARADO">Preparado en cocina</option>
+            <option value="DIRECTO">Entrega directa</option>
+          </Select>
+        </Field>
         <div className="flex flex-col gap-3 sm:col-span-2">
           <Checkbox label="Controlar existencias" hint="Actívelo en bebidas. Los platos y los cubetazos no descuentan inventario." checked={trackStock} onChange={(e) => setTrackStock(e.target.checked)} />
           <Checkbox label="Producto activo" hint="Los productos inactivos no aparecen al tomar pedidos." checked={active} onChange={(e) => setActive(e.target.checked)} />
@@ -132,6 +139,7 @@ export function ProductsPage() {
     },
     { key: 'categoria', header: 'Categoría', render: (p) => categoryName(p.categoryId) },
     { key: 'precio', header: 'Precio', align: 'right', render: (p) => <span className="font-semibold">{fmtMoney(p.price)}</span> },
+    { key: 'entrega', header: 'Entrega', render: (p) => (p.fulfillment === 'PREPARADO' ? 'Cocina' : 'Directa') },
     { key: 'stock', header: 'Control de stock', render: (p) => (p.trackStock ? `Sí · ${p.stock} en existencia` : 'No') },
     { key: 'estado', header: 'Estado', render: (p) => <Badge tone={p.active ? 'success' : 'neutral'}>{p.active ? 'Activo' : 'Inactivo'}</Badge> },
     {
@@ -202,7 +210,7 @@ export function ProductsPage() {
       </Card>
 
       <Card flush>
-        <DataTable columns={columns} rows={rows} rowKey={(p) => p.id} minWidth={900} empty={<EmptyState icon={Tag} title="Sin productos" description="Ningún producto coincide con los filtros." />} />
+        <DataTable columns={columns} rows={rows} rowKey={(p) => p.id} minWidth={980} empty={<EmptyState icon={Tag} title="Sin productos" description="Ningún producto coincide con los filtros." />} />
       </Card>
 
       <Card title="Historial de cambios de precio" flush>

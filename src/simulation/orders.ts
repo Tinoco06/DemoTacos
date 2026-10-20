@@ -1,4 +1,4 @@
-import type { AppState, Order, OrderItem, Payment, PaymentPart, ServiceType, StockMovement } from '../types';
+import type { AppState, Order, OrderItem, OrderOperation, Payment, PaymentPart, ServiceType, StockMovement } from '../types';
 import { clientBalance, currentSession, itemsSubtotal, openOrderForTable, orderTotal } from '../lib/calc';
 import { fmtMoney, fmtOrderNumber, round2, uid } from '../lib/format';
 import { SimError } from './errors';
@@ -7,6 +7,8 @@ import { SimError } from './errors';
    nuevo; en el sistema definitivo se sustituyen por llamadas a la API. */
 
 export interface SubmitOrderInput {
+  /** 'cocina': envío de comidas preparadas. 'directo': bebidas que se suman a la cuenta al instante. */
+  kind: OrderOperation['kind'];
   orderId: string | null;
   service: ServiceType;
   tableId: string | null;
@@ -18,31 +20,47 @@ export interface SubmitOrderInput {
 
 export interface SubmitOrderResult {
   order: Order;
-  /** Productos enviados a cocina en esta confirmación. */
-  sentItems: OrderItem[];
-  isAddition: boolean;
-  sentAt: string;
+  /** La incorporación recién registrada: sus productos son los únicos que cambian la cuenta. */
+  operation: OrderOperation;
 }
 
 function mergeItems(current: OrderItem[], added: OrderItem[]): OrderItem[] {
   const result = current.map((i) => ({ ...i }));
   for (const item of added) {
-    const same = result.find((i) => i.productId === item.productId && i.note === item.note && i.price === item.price);
+    const same = result.find((i) => i.productId === item.productId && i.note === item.note && i.price === item.price && i.fulfillment === item.fulfillment);
     if (same) same.qty += item.qty;
     else result.push({ ...item });
   }
   return result;
 }
 
+/**
+ * Incorpora productos a una cuenta (la abre si no existe). Cada llamada registra
+ * una sola operación y descuenta el inventario una sola vez.
+ */
 export function submitOrder(state: AppState, input: SubmitOrderInput): [AppState, SubmitOrderResult] {
-  const items = input.items.filter((i) => i.qty > 0).map((i) => ({ ...i, note: i.note.trim() }));
-  if (items.length === 0) throw new SimError('Agregue al menos un producto al pedido.');
+  if (!currentSession(state)) throw new SimError('La caja está cerrada. Ábrala para registrar pedidos.');
+  const requested = input.items.filter((i) => i.qty > 0);
+  if (requested.length === 0) {
+    throw new SimError(input.kind === 'cocina' ? 'No hay comidas pendientes para enviar a cocina.' : 'Agregue al menos un producto.');
+  }
+  // Nombre, precio y tipo se toman del catálogo vigente, no de lo que envía la pantalla.
+  const items: OrderItem[] = requested.map((i) => {
+    const product = state.products.find((p) => p.id === i.productId);
+    if (!product || !product.active) throw new SimError('Uno de los productos ya no está disponible.');
+    if (input.kind === 'cocina' && product.fulfillment !== 'PREPARADO') {
+      throw new SimError(`${product.name} es de entrega directa y no se envía a cocina.`);
+    }
+    if (input.kind === 'directo' && product.fulfillment !== 'DIRECTO') {
+      throw new SimError(`${product.name} requiere preparación: envíelo a cocina.`);
+    }
+    return { productId: product.id, name: product.name, price: product.price, qty: i.qty, note: i.note.trim(), fulfillment: product.fulfillment };
+  });
 
   const needed = new Map<string, number>();
   for (const i of items) needed.set(i.productId, (needed.get(i.productId) ?? 0) + i.qty);
   for (const [productId, qty] of needed) {
-    const product = state.products.find((p) => p.id === productId);
-    if (!product || !product.active) throw new SimError('Uno de los productos ya no está disponible.');
+    const product = state.products.find((p) => p.id === productId)!;
     if (product.trackStock && product.stock < qty) {
       throw new SimError(`Stock insuficiente de ${product.name}. Disponibles: ${product.stock}.`);
     }
@@ -62,8 +80,16 @@ export function submitOrder(state: AppState, input: SubmitOrderInput): [AppState
 
   const now = new Date().toISOString();
   const table = state.tables.find((t) => t.id === input.tableId);
+  const operation: OrderOperation = {
+    id: uid('op'),
+    kind: input.kind,
+    number: (existing?.operations.filter((o) => o.kind === input.kind).length ?? 0) + 1,
+    date: now,
+    user: input.user,
+    items,
+  };
   const order: Order = existing
-    ? { ...existing, items: mergeItems(existing.items, items) }
+    ? { ...existing, items: mergeItems(existing.items, items), operations: [...existing.operations, operation] }
     : {
         id: uid('ord'),
         number: state.nextOrderNumber,
@@ -71,7 +97,8 @@ export function submitOrder(state: AppState, input: SubmitOrderInput): [AppState
         tableId: input.service === 'mesa' ? table!.id : null,
         tableName: input.service === 'mesa' ? table!.name : null,
         customer: input.service === 'domicilio' ? input.customer.trim() : '',
-        items,
+        items: mergeItems([], items),
+        operations: [operation],
         shipping: input.service === 'domicilio' ? round2(input.shipping) : 0,
         discount: 0,
         status: 'abierta',
@@ -106,7 +133,7 @@ export function submitOrder(state: AppState, input: SubmitOrderInput): [AppState
     orders: existing ? state.orders.map((o) => (o.id === order.id ? order : o)) : [...state.orders, order],
     nextOrderNumber: existing ? state.nextOrderNumber : state.nextOrderNumber + 1,
   };
-  return [next, { order, sentItems: items, isAddition: Boolean(existing), sentAt: now }];
+  return [next, { order, operation }];
 }
 
 export function cancelOrder(state: AppState, input: { orderId: string; reason: string; user: string }): AppState {
@@ -168,8 +195,8 @@ export function chargeOrder(state: AppState, input: ChargeInput): [AppState, Ord
   }
 
   const session = currentSession(state);
+  if (!session) throw new SimError('La caja está cerrada. Ábrala para registrar cobros.');
   const payments: Payment[] = parts.map((part) => {
-    if (part.method === 'efectivo' && !session) throw new SimError('Abra la caja para recibir efectivo.');
     if (part.method === 'credito') {
       const client = state.clients.find((c) => c.id === part.clientId);
       if (!client) throw new SimError('Seleccione el cliente para la venta al crédito.');
@@ -204,7 +231,7 @@ export function registerAbono(state: AppState, input: { clientId: string; amount
   if (!(input.amount > 0)) throw new SimError('Ingrese un importe mayor que cero.');
   if (input.amount > balance + 0.004) throw new SimError(`El abono no puede superar el saldo de ${fmtMoney(balance)}.`);
   const session = currentSession(state);
-  if (input.method === 'efectivo' && !session) throw new SimError('Abra la caja para recibir efectivo.');
+  if (!session) throw new SimError('La caja está cerrada. Ábrala para registrar abonos.');
   return {
     ...state,
     payments: [

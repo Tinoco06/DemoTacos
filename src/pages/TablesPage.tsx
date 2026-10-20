@@ -3,11 +3,11 @@ import { Bike, LayoutGrid, Pencil, Plus, Settings2 } from 'lucide-react';
 import type { DiningTable } from '../types';
 import { useApp, useAttempt } from '../store/AppStore';
 import { Button } from '../components/ui/Button';
-import { Badge, Card, EmptyState, PageHeader } from '../components/ui/Basics';
+import { Alert, Badge, Card, EmptyState, PageHeader } from '../components/ui/Basics';
 import { Input } from '../components/ui/Field';
 import { Modal } from '../components/ui/Modal';
 import { TableCard } from '../components/domain/Cards';
-import { openOrderForTable, openOrders, orderTotal, serviceLabel } from '../lib/calc';
+import { currentSession, openOrderForTable, openOrders, orderTotal, serviceLabel } from '../lib/calc';
 import { fmtMoney, fmtOrderNumber, fmtTime } from '../lib/format';
 import { navigate } from '../lib/router';
 
@@ -111,6 +111,21 @@ export function TablesPage() {
           </>
         }
       />
+
+      {!currentSession(state) && (
+        <Alert
+          tone="warning"
+          action={
+            isAdmin && (
+              <Button size="sm" variant="primary" onClick={() => navigate('caja')}>
+                Abrir caja
+              </Button>
+            )
+          }
+        >
+          <span className="font-semibold">La caja está cerrada.</span> No se pueden tomar pedidos hasta realizar la apertura{isAdmin ? '.' : '. Pida al administrador que abra la caja.'}
+        </Alert>
+      )}
 
       {tables.length === 0 ? (
         <Card>
