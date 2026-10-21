@@ -42,7 +42,7 @@ export function Modal({ title, description, onClose, children, footer, size = 'm
             <h2 className="text-lg font-semibold text-ink">{title}</h2>
             {description && <p className="mt-0.5 text-sm text-muted">{description}</p>}
           </div>
-          <button type="button" onClick={onClose} aria-label="Cerrar" className="-mr-2 -mt-1 grid size-10 shrink-0 place-items-center rounded-lg text-muted hover:bg-carbon/5">
+          <button type="button" onClick={onClose} aria-label="Cerrar" className="-mr-2 -mt-1 grid size-11 shrink-0 place-items-center rounded-lg text-muted hover:bg-carbon/5">
             <X className="size-5" aria-hidden />
           </button>
         </header>

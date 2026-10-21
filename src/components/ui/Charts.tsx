@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ChevronRight } from 'lucide-react';
 import { cn, fmtMoney } from '../../lib/format';
 
 export interface ChartSeries {
@@ -108,8 +109,11 @@ export function BarChart({ series, groups }: { series: ChartSeries[]; groups: Ch
           </div>
         </div>
       </div>
-      <details className="mt-4 text-sm">
-        <summary className="inline-block rounded text-muted hover:text-ink">Ver datos en tabla</summary>
+      <details className="group mt-2 text-sm">
+        <summary className="-ml-2 inline-flex min-h-11 list-none items-center gap-1 rounded-lg px-2 text-muted hover:text-ink [&::-webkit-details-marker]:hidden">
+          <ChevronRight className="size-4 transition-transform group-open:rotate-90" aria-hidden />
+          Ver datos en tabla
+        </summary>
         <div className="mt-3 overflow-x-auto">
           <table className="w-full min-w-[320px] text-sm">
             <thead>

@@ -476,7 +476,7 @@ export function CashPage() {
       )}
 
       <Card title="Historial de cierres" description="Cada cierre conserva sus ventas y el arqueo de efectivo" flush>
-        <DataTable columns={historyColumns} rows={historyRows} rowKey={(r) => r.session.id} minWidth={900} empty={<EmptyState icon={History} title="Sin cierres registrados" />} />
+        <DataTable columns={historyColumns} rows={historyRows} rowKey={(r) => r.session.id} minWidth={700} empty={<EmptyState icon={History} title="Sin cierres registrados" />} />
       </Card>
 
       {opening && <OpenModal onClose={() => setOpening(false)} />}

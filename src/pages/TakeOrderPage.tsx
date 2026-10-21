@@ -306,8 +306,8 @@ export function TakeOrderPage({ params }: { params: Record<string, string> }) {
               <p id="categorias" className="mb-2 text-xs font-medium uppercase tracking-wide text-muted">
                 Categorías
               </p>
-              {/* Tablet y teléfono: una fila con desplazamiento horizontal. PC: filas compactas. */}
-              <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 lg:mx-0 lg:flex-wrap lg:gap-1.5 lg:overflow-visible lg:px-0" role="tablist" aria-labelledby="categorias">
+              {/* Teléfono y tablet (también apaisada): una fila desplazable. PC desde 1280 px: filas compactas. */}
+              <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 xl:mx-0 xl:flex-wrap xl:gap-1.5 xl:overflow-visible xl:px-0" role="tablist" aria-labelledby="categorias">
                 {[{ id: 'todos', name: 'Todos' }, ...CATEGORIES].map((c) => (
                   <button
                     key={c.id}
@@ -316,7 +316,7 @@ export function TakeOrderPage({ params }: { params: Record<string, string> }) {
                     aria-selected={category === c.id}
                     onClick={() => setCategory(c.id)}
                     className={cn(
-                      'h-10 shrink-0 whitespace-nowrap rounded-full px-4 text-[13px] font-medium transition-colors lg:px-3',
+                      'h-11 shrink-0 whitespace-nowrap rounded-full px-4 text-[13px] font-medium transition-colors xl:px-3',
                       category === c.id ? 'bg-frambuesa text-white' : 'bg-carbon/6 text-muted hover:bg-carbon/10 hover:text-ink',
                     )}
                   >

@@ -118,6 +118,7 @@ export function ExpensesPage() {
     { key: 'importe', header: 'Importe', align: 'right', render: (e) => <span className="font-semibold">{fmtMoney(e.amount)}</span> },
     {
       key: 'acciones',
+      sticky: true,
       header: 'Acciones',
       align: 'right',
       render: (e) => (
@@ -177,7 +178,7 @@ export function ExpensesPage() {
         }
         flush
       >
-        <DataTable columns={columns} rows={rows} rowKey={(e) => e.id} minWidth={780} empty={<EmptyState icon={ReceiptText} title="Sin gastos en este filtro" description="Ajuste el período o los filtros, o registre un gasto nuevo." />} />
+        <DataTable columns={columns} rows={rows} rowKey={(e) => e.id} minWidth={700} empty={<EmptyState icon={ReceiptText} title="Sin gastos en este filtro" description="Ajuste el período o los filtros, o registre un gasto nuevo." />} />
       </Card>
 
       {adding && <ExpenseModal onClose={() => setAdding(false)} />}

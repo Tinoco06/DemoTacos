@@ -144,6 +144,7 @@ export function ProductsPage() {
     { key: 'estado', header: 'Estado', render: (p) => <Badge tone={p.active ? 'success' : 'neutral'}>{p.active ? 'Activo' : 'Inactivo'}</Badge> },
     {
       key: 'acciones',
+      sticky: true,
       header: 'Acciones',
       align: 'right',
       render: (p) => (
@@ -210,7 +211,7 @@ export function ProductsPage() {
       </Card>
 
       <Card flush>
-        <DataTable columns={columns} rows={rows} rowKey={(p) => p.id} minWidth={980} empty={<EmptyState icon={Tag} title="Sin productos" description="Ningún producto coincide con los filtros." />} />
+        <DataTable columns={columns} rows={rows} rowKey={(p) => p.id} minWidth={700} empty={<EmptyState icon={Tag} title="Sin productos" description="Ningún producto coincide con los filtros." />} />
       </Card>
 
       <Card title="Historial de cambios de precio" flush>

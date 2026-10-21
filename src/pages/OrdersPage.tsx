@@ -7,7 +7,7 @@ import { Badge, Card, EmptyState, PageHeader, Segmented } from '../components/ui
 import { DataTable, type Column } from '../components/ui/DataTable';
 import { OrderDetailModal } from '../components/domain/OrderDetailModal';
 import { METHOD_LABEL, itemsCount, openOrders, orderTotal, serviceLabel } from '../lib/calc';
-import { fmtDateTime, fmtMoney, fmtOrderNumber, fmtTime } from '../lib/format';
+import { fmtDate, fmtMoney, fmtOrderNumber, fmtTime } from '../lib/format';
 import { navigate } from '../lib/router';
 
 type Tab = 'abiertas' | 'ventas' | 'canceladas';
@@ -20,7 +20,7 @@ const byClosedDesc = (a: Order, b: Order) => (b.closedAt ?? '').localeCompare(a.
  * distinguirla al recorrer la tabla sin que parezca una alerta.
  */
 const deliveryRow = (o: Order) =>
-  o.service === 'domicilio' ? 'bg-crema-soft/70 [&>td:first-child]:shadow-[inset_3px_0_0_0_var(--color-crema)]' : undefined;
+  o.service === 'domicilio' ? 'bg-crema-wash! [&>td:first-child]:shadow-[inset_3px_0_0_0_var(--color-crema)]' : undefined;
 
 /** «Sra. Lourdes, Col. Las Palmas» → nombre y dirección en líneas separadas. */
 function splitCustomer(customer: string): [string, string] {
@@ -70,16 +70,17 @@ export function OrdersPage() {
   const openColumns: Column<Order>[] = [
     ...common,
     { key: 'hora', header: 'Abierta', render: (o) => <span className="whitespace-nowrap">{fmtTime(o.createdAt)}</span> },
-    { key: 'productos', header: 'Unidades', align: 'right', render: (o) => itemsCount(o.items) },
+    { key: 'productos', header: 'Unidades', align: 'right', className: 'hidden xl:table-cell', render: (o) => itemsCount(o.items) },
     { key: 'total', header: 'Importe', align: 'right', render: (o) => <span className="font-semibold">{fmtMoney(orderTotal(o))}</span> },
     {
       key: 'acciones',
+      sticky: true,
       header: 'Acciones',
       align: 'right',
       render: (o) => (
         <div className="flex justify-end gap-2">
-          <Button size="sm" icon={Eye} onClick={() => setDetail({ id: o.id, view: 'cocina' })}>
-            Ver
+          <Button size="sm" icon={Eye} onClick={() => setDetail({ id: o.id, view: 'cocina' })} className="max-sm:min-w-11">
+            <span className="max-sm:sr-only">Ver</span>
           </Button>
           <Button size="sm" variant="primary" icon={HandCoins} onClick={() => navigate('cobro', { pedido: o.id })}>
             Cobrar
@@ -91,13 +92,20 @@ export function OrdersPage() {
 
   const closedColumns = (kind: 'ventas' | 'canceladas'): Column<Order>[] => [
     ...common,
-    { key: 'fecha', header: kind === 'ventas' ? 'Cobrada' : 'Cancelada', render: (o) => <span className="whitespace-nowrap">{fmtDateTime(o.closedAt ?? o.createdAt)}</span> },
+    { key: 'fecha', header: kind === 'ventas' ? 'Cobrada' : 'Cancelada', render: (o) => (
+        <>
+          <span className="whitespace-nowrap">{fmtDate(o.closedAt ?? o.createdAt)}</span>{' '}
+          <span className="whitespace-nowrap">{fmtTime(o.closedAt ?? o.createdAt)}</span>
+        </>
+      ),
+    },
     kind === 'ventas'
       ? { key: 'pago', header: 'Forma de pago', render: (o) => paymentLabel(o) }
       : { key: 'motivo', header: 'Motivo', render: (o) => <span className="text-muted">{o.cancelReason || 'Sin motivo'}</span> },
     { key: 'total', header: 'Importe', align: 'right', render: (o) => <span className="font-semibold">{fmtMoney(orderTotal(o))}</span> },
     {
       key: 'acciones',
+      sticky: true,
       header: 'Acciones',
       align: 'right',
       render: (o) => (
@@ -166,16 +174,16 @@ export function OrdersPage() {
       />
       <Card flush>
         {tab === 'abiertas' && (
-          <DataTable columns={openColumns} rows={open} rowKey={(o) => o.id} rowClassName={deliveryRow} minWidth={760} empty={<EmptyState icon={ClipboardList} title="Sin cuentas abiertas" description="Los pedidos confirmados aparecerán aquí hasta que se cobren." />} />
+          <DataTable columns={openColumns} rows={open} rowKey={(o) => o.id} rowClassName={deliveryRow} minWidth={640} empty={<EmptyState icon={ClipboardList} title="Sin cuentas abiertas" description="Los pedidos confirmados aparecerán aquí hasta que se cobren." />} />
         )}
         {tab === 'ventas' && (
           <>
-            <DataTable columns={closedColumns('ventas')} rows={sold.slice(0, RECENT_LIMIT)} rowKey={(o) => o.id} rowClassName={deliveryRow} minWidth={820} empty={<EmptyState icon={ReceiptText} title="Sin ventas registradas" />} />
+            <DataTable columns={closedColumns('ventas')} rows={sold.slice(0, RECENT_LIMIT)} rowKey={(o) => o.id} rowClassName={deliveryRow} minWidth={700} empty={<EmptyState icon={ReceiptText} title="Sin ventas registradas" />} />
             {sold.length > RECENT_LIMIT && <p className="border-t border-line px-5 py-3 text-sm text-muted">Se muestran las {RECENT_LIMIT} ventas más recientes de {sold.length}. El detalle por período está en Reportes.</p>}
           </>
         )}
         {tab === 'canceladas' && (
-          <DataTable columns={closedColumns('canceladas')} rows={cancelled} rowKey={(o) => o.id} rowClassName={deliveryRow} minWidth={820} empty={<EmptyState icon={ClipboardList} title="Sin pedidos cancelados" description="Las operaciones canceladas quedan registradas aquí con su motivo." />} />
+          <DataTable columns={closedColumns('canceladas')} rows={cancelled} rowKey={(o) => o.id} rowClassName={deliveryRow} minWidth={700} empty={<EmptyState icon={ClipboardList} title="Sin pedidos cancelados" description="Las operaciones canceladas quedan registradas aquí con su motivo." />} />
         )}
       </Card>
       {detail && <OrderDetailModal orderId={detail.id} initialView={detail.view} onClose={() => setDetail(null)} />}

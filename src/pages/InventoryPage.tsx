@@ -125,6 +125,7 @@ export function InventoryPage() {
     { key: 'estado', header: 'Estado', render: (p) => <Badge tone={STATUS[stockStatus(p)].tone}>{STATUS[stockStatus(p)].label}</Badge> },
     {
       key: 'acciones',
+      sticky: true,
       header: 'Acciones',
       align: 'right',
       render: (p) => (
@@ -176,11 +177,11 @@ export function InventoryPage() {
       />
 
       <Card flush>
-        <DataTable columns={columns} rows={rows} rowKey={(p) => p.id} minWidth={720} empty={<EmptyState icon={PackageCheck} title="Ningún producto en este estado" description="Las existencias están por encima del mínimo configurado." />} />
+        <DataTable columns={columns} rows={rows} rowKey={(p) => p.id} minWidth={680} empty={<EmptyState icon={PackageCheck} title="Ningún producto en este estado" description="Las existencias están por encima del mínimo configurado." />} />
       </Card>
 
       <Card title="Historial de movimientos" description="Últimos 30 movimientos, incluidas las ventas" flush>
-        <DataTable columns={historyColumns} rows={state.stockMovements.slice(0, 30)} rowKey={(m) => m.id} minWidth={860} empty={<EmptyState icon={History} title="Sin movimientos registrados" />} />
+        <DataTable columns={historyColumns} rows={state.stockMovements.slice(0, 30)} rowKey={(m) => m.id} minWidth={700} empty={<EmptyState icon={History} title="Sin movimientos registrados" />} />
       </Card>
 
       {movingProduct && <StockModal product={movingProduct} onClose={() => setMoving(null)} />}

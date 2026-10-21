@@ -150,6 +150,7 @@ export function ClientsPage() {
     { key: 'saldo', header: 'Saldo pendiente', align: 'right', render: (c) => <span className="font-semibold">{fmtMoney(clientBalance(state, c.id))}</span> },
     {
       key: 'acciones',
+      sticky: true,
       header: 'Acciones',
       align: 'right',
       render: (c) => (
@@ -184,7 +185,7 @@ export function ClientsPage() {
       </div>
 
       <Card flush>
-        <DataTable columns={columns} rows={state.clients} rowKey={(c) => c.id} minWidth={820} empty={<EmptyState icon={Users} title="Sin clientes registrados" />} />
+        <DataTable columns={columns} rows={state.clients} rowKey={(c) => c.id} minWidth={700} empty={<EmptyState icon={Users} title="Sin clientes registrados" />} />
       </Card>
 
       {dialog?.kind === 'nuevo' && <ClientFormModal client={null} onClose={() => setDialog(null)} />}

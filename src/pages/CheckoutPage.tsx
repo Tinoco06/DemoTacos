@@ -43,6 +43,7 @@ export function CheckoutPage({ params }: { params: Record<string, string> }) {
     { key: 'saldo', header: 'Saldo pendiente', align: 'right', render: (d) => <span className="font-semibold">{fmtMoney(d.balance)}</span> },
     {
       key: 'acciones',
+      sticky: true,
       header: 'Acciones',
       align: 'right',
       render: (d) => (

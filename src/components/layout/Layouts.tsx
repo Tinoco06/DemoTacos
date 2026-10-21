@@ -43,7 +43,7 @@ function ProfileSwitcher() {
             aria-pressed={state.role === role}
             onClick={() => change(role)}
             className={cn(
-              'h-9 rounded-md px-3 text-sm font-medium transition-colors',
+              'h-11 rounded-md px-3 text-sm font-medium transition-colors xl:pointer-fine:h-9',
               state.role === role ? 'bg-white text-carbon' : 'text-white/80 hover:text-white',
             )}
           >
@@ -147,7 +147,7 @@ export function AdminLayout({ page, children }: { page: string; children: ReactN
                 reset.ask();
               }}
             />
-            <button type="button" onClick={() => setDrawer(false)} aria-label="Cerrar menú" className="absolute right-2 top-3 grid size-10 place-items-center rounded-lg text-white/80 hover:bg-white/10">
+            <button type="button" onClick={() => setDrawer(false)} aria-label="Cerrar menú" className="absolute right-2 top-2.5 grid size-11 place-items-center rounded-lg text-white/80 hover:bg-white/10">
               <X className="size-5" aria-hidden />
             </button>
           </aside>
@@ -155,11 +155,11 @@ export function AdminLayout({ page, children }: { page: string; children: ReactN
       )}
 
       <header className="sticky top-0 z-20 flex h-16 items-center gap-3 bg-carbon px-4 sm:px-6 lg:px-8">
-        <button type="button" onClick={() => setDrawer(true)} aria-label="Abrir menú" className="grid size-10 shrink-0 place-items-center rounded-lg text-white hover:bg-white/10 lg:hidden">
+        <button type="button" onClick={() => setDrawer(true)} aria-label="Abrir menú" className="grid size-11 shrink-0 place-items-center rounded-lg text-white hover:bg-white/10 lg:hidden">
           <Menu className="size-5" aria-hidden />
         </button>
         <p className="min-w-0 flex-1 truncate text-sm font-medium text-white/80">{title}</p>
-        <a href="#/caja" className="hidden items-center gap-2 rounded-lg px-2 py-1 text-sm text-white/80 hover:bg-white/10 md:flex">
+        <a href="#/caja" className="hidden min-h-11 items-center gap-2 rounded-lg px-3 text-sm text-white/80 hover:bg-white/10 md:flex">
           {session ? (
             <>
               <Badge tone="success">Caja abierta</Badge>
@@ -210,7 +210,7 @@ export function WaiterLayout({ page, children }: { page: string; children: React
           <Brand compact />
           <div className="ml-4 hidden flex-1 lg:block">{nav}</div>
           <div className="ml-auto flex items-center gap-2">
-            <button type="button" onClick={reset.ask} title="Restaurar datos de demo" aria-label="Restaurar datos de demo" className="flex h-10 items-center gap-2 rounded-lg px-2.5 text-sm font-medium text-white/75 hover:bg-white/10 hover:text-white">
+            <button type="button" onClick={reset.ask} title="Restaurar datos de demo" aria-label="Restaurar datos de demo" className="flex h-11 min-w-11 items-center justify-center gap-2 rounded-lg px-2.5 text-sm font-medium text-white/75 hover:bg-white/10 hover:text-white">
               <RotateCcw className="size-5" aria-hidden />
               <span className="hidden whitespace-nowrap xl:inline">Restaurar demo</span>
             </button>
